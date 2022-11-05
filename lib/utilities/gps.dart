@@ -74,7 +74,7 @@ class GPS {
     addLocation(position.latitude, position.longitude);
   }
 
-  Future<void> start() async {
+  Future<bool> start() async {
     await _checkPermission();
     await _checkLocationServiceEnabled();
     //Get first position and add to path
@@ -91,6 +91,8 @@ class GPS {
 
     //Startup timer
     pingTimer = Timer.periodic(
-        Duration(seconds: pingTime), (Timer t) async => await ping());
+        Duration(seconds: pingTime), (Timer t) async => {ping())});
+
+    return true;
   }
 }

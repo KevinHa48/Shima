@@ -67,29 +67,38 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: currentLocation ==
-              null // Ternary to check whether currentLocation variable exists
-          ? const Center(
-              child: Text("Loading...")) // If null, display loading text
-          : GoogleMap(
-              // Otherwise, display the map
-              mapType: MapType
-                  .satellite, // map types: [roadmap, hybrid, terrain, satellite]
-              initialCameraPosition: CameraPosition(
-                target: LatLng(
-                    // (currentLat, currentLong)
-                    gps.getLatestLatitude(),
-                    gps.getLatestLongitude()),
-                zoom: 8.5, // Camera zoom
+    return FutureBuilder(
+        future: gps.start(),
+        builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            return Scaffold(
+              appBar: AppBar(
+                // Here we take the value from the MyHomePage object that was created by
+                // the App.build method, and use it to set our appbar title.
+                title: Text(widget.title),
               ),
-              // Our markers
-              markers: gps.generatePath()),
-    );
+              body: currentLocation ==
+                      null // Ternary to check whether currentLocation variable exists
+                  ? const Center(
+                      child:
+                          Text("Loading...")) // If null, display loading text
+                  : GoogleMap(
+                      // Otherwise, display the map
+                      mapType: MapType
+                          .satellite, // map types: [roadmap, hybrid, terrain, satellite]
+                      initialCameraPosition: CameraPosition(
+                        target: LatLng(
+                            // (currentLat, currentLong)
+                            gps.getLatestLatitude(),
+                            gps.getLatestLongitude()),
+                        zoom: 8.5, // Camera zoom
+                      ),
+                      // Our markers
+                      markers: gps.generatePath()),
+            );
+          } else {
+            return CircularProgressIndicator();
+          }
+        });
   }
 }
