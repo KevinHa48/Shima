@@ -84,34 +84,73 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: currentLocation ==
-              null // Ternary to check whether currentLocation variable exists
-          ? const Center(
-              child: Text("Loading...")) // If null, display loading text
-          : GoogleMap(
-              // Otherwise, display the map
-              mapType: MapType
-                  .satellite, // map types: [roadmap, hybrid, terrain, satellite]
-              initialCameraPosition: CameraPosition(
-                target: LatLng(
-                    // (currentLat, currentLong)
-                    currentLocation!.latitude!,
-                    currentLocation!.longitude!),
-                zoom: 8.5, // Camera zoom
-              ),
-              // Our markers
-              markers: {
-                  Marker(
-                    markerId: const MarkerId("currentLocation"),
-                    position: LatLng(currentLocation!.latitude!,
+        body: SizedBox.expand(
+      child: Stack(children: <Widget>[
+        Align(
+          child: currentLocation ==
+                  null // Ternary to check whether currentLocation variable exists
+              ? const Center(
+                  child: Text("Loading...")) // If null, display loading text
+              : GoogleMap(
+                  padding: EdgeInsets.only(bottom: 100, left: 15),
+                  // Otherwise, display the map
+                  mapType: MapType
+                      .satellite, // map types: [roadmap, hybrid, terrain, satellite]
+                  initialCameraPosition: CameraPosition(
+                    target: LatLng(
+                        // (currentLat, currentLong)
+                        currentLocation!.latitude!,
                         currentLocation!.longitude!),
-                  )
-                }),
-    );
+                    zoom: 16, // Camera zoom
+                  ),
+                  // Our markers
+                  markers: {
+                      Marker(
+                        markerId: const MarkerId("currentLocation"),
+                        position: LatLng(currentLocation!.latitude!,
+                            currentLocation!.longitude!),
+                      )
+                    }),
+        ),
+        SizedBox.expand(
+            child: DraggableScrollableSheet(
+          initialChildSize: 0.25,
+          minChildSize: 0.12,
+          maxChildSize: 0.8,
+          builder: (BuildContext c, s) {
+            return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 15,
+                  vertical: 10,
+                ),
+                decoration: const BoxDecoration(
+                    color: Colors.black12,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black,
+                        blurRadius: 10,
+                      )
+                    ]),
+                child: ListView(
+                  controller: s,
+                  children: <Widget>[
+                    Center(
+                        child: Container(
+                      height: 8,
+                      width: 50,
+                      decoration: BoxDecoration(
+                          color: Colors.grey,
+                          borderRadius: BorderRadius.circular(5)),
+                    ))
+                  ],
+                ));
+          },
+        ))
+      ]),
+    ));
   }
 }
