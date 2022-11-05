@@ -53,11 +53,13 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final Completer<GoogleMapController> _controller = Completer();
+  // @TODO: get user's current location and put that into LatLng
   static const LatLng sourceLocation = LatLng(40.7429149, -74.1782508);
 
   List<LatLng> polylineCoordinates = [];
   LocationData? currentLocation;
 
+  // Updates our current location
   void getCurrentLocation() {
     Location location = Location();
 
@@ -66,12 +68,18 @@ class _MyHomePageState extends State<MyHomePage> {
         currentLocation = location;
       },
     );
+
+    location.onLocationChanged.listen((newLoc) {
+      currentLocation = newLoc;
+
+      setState(() {});
+    });
   }
 
-  static const CameraPosition initialLocation = CameraPosition(
-    target: LatLng(40.7429149, -74.1782508),
-    zoom: 14.4746,
-  );
+  @override
+  void initState() {
+    getCurrentLocation();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,22 +89,29 @@ class _MyHomePageState extends State<MyHomePage> {
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: GoogleMap(
-          mapType: MapType.hybrid,
-          initialCameraPosition: CameraPosition(
-            target: sourceLocation,
-            zoom: 14.5,
-          ),
-          markers: {
-            Marker(
-              markerId: MarkerId("source"),
-              position: sourceLocation,
-            )
-          }),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
-        onPressed: () {},
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      body: currentLocation ==
+              null // Ternary to check whether currentLocation variable exists
+          ? const Center(
+              child: Text("Loading...")) // If null, display loading text
+          : GoogleMap(
+              // Otherwise, display the map
+              mapType: MapType
+                  .satellite, // map types: [roadmap, hybrid, terrain, satellite]
+              initialCameraPosition: CameraPosition(
+                target: LatLng(
+                    // (currentLat, currentLong)
+                    currentLocation!.latitude!,
+                    currentLocation!.longitude!),
+                zoom: 8.5, // Camera zoom
+              ),
+              // Our markers
+              markers: {
+                  Marker(
+                    markerId: const MarkerId("currentLocation"),
+                    position: LatLng(currentLocation!.latitude!,
+                        currentLocation!.longitude!),
+                  )
+                }),
     );
   }
 }
