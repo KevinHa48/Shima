@@ -50,7 +50,7 @@ class GPS {
     pingTimer.cancel();
   }
 
-  Future<bool> addLocation(double lat, double lon) async {
+  addLocation(double lat, double lon) {
     LatLng newLocation = LatLng(lat, lon);
     if (locations.isEmpty || locations.last != newLocation) {
       locations = [...locations, newLocation];
