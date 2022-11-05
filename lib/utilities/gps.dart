@@ -53,7 +53,7 @@ class GPS {
   Future<bool> addLocation(double lat, double lon) async {
     LatLng newLocation = LatLng(lat, lon);
     if (locations.isEmpty || locations.last != newLocation) {
-      locations.add(newLocation);
+      locations = [...locations, newLocation];
       return true;
     }
     return false;

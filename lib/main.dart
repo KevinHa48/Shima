@@ -62,7 +62,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
-    gps.start();
+    gps.start(); //TODO this can throw an error. Implement frontend logic to capture that.
   }
 
   @override
@@ -89,13 +89,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 zoom: 8.5, // Camera zoom
               ),
               // Our markers
-              markers: {
-                  Marker(
-                    markerId: const MarkerId("currentLocation"),
-                    position: LatLng(
-                        gps.getLatestLatitude(), gps.getLatestLongitude()),
-                  )
-                }),
+              markers: gps.generatePath()),
     );
   }
 }
