@@ -91,7 +91,7 @@ class GPS {
 
     //Startup timer
     pingTimer = Timer.periodic(
-        Duration(seconds: pingTime), (Timer t) async => {ping())});
+        Duration(seconds: pingTime), (Timer t) async => {ping()});
 
     return true;
   }
