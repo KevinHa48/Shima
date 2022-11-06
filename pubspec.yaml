@@ -32,6 +32,8 @@ dependencies:
   google_maps_flutter: ^2.2.1
   google_maps_flutter_web: ^0.4.0+3
   flutter_polyline_points: ^1.0.0
+  flutter_compass: '^0.7.0'
+  permission_handler: '^10.2.0'
   location: ^4.4.0
   flutter:
     sdk: flutter
