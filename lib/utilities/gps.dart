@@ -1,11 +1,11 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'colors.dart';
 import './connectivity.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'dart:typed_data';
 
 class GPS {
   List<LatLng> locations;
@@ -151,12 +151,16 @@ class GPS {
     locations = newPath;
   }
 
-  Polyline generatePath() {
+  Future<Polyline> generatePath() async {
     optimizePath();
     PolylineId id = const PolylineId("breadcrumb-trail");
+    ByteData byteData = await rootBundle
+        .load("assets/images/Yuru_Camp_manga_logo_yellow_tent-sharp.bmp");
+    Uint8List bitmapBytes = byteData.buffer.asUint8List();
     Polyline polyline = Polyline(
-        startCap: Cap.customCapFromBitmap(BitmapDescriptor.defaultMarkerWithHue(
-            BitmapDescriptor.hueRed)), //TODO make custom start point
+        startCap: Cap.customCapFromBitmap(
+            BitmapDescriptor.fromBytes(bitmapBytes),
+            refWidth: 99),
         endCap: Cap.roundCap,
         polylineId: id,
         color: ColorSelect().shimaRed,

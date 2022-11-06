@@ -70,6 +70,7 @@ flutter:
 
   assets:
     - assets/images/compass.png
+    - assets/images/Yuru_Camp_manga_logo_yellow_tent-sharp.bmp
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

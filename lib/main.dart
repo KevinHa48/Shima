@@ -110,7 +110,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _locations.addListener(() async {
       currentLocation = gps.getLatestCoordinate();
       polylines = {};
-      polylines.add(gps.generatePath());
+      polylines.add(await gps.generatePath());
       distance = gps.getDistance(); //TODO implement this into front end
       breadCrumbs = gps.locations.length; //TODO implement this into front end
       setState(() {});
@@ -337,7 +337,6 @@ class CompassState extends State<Compass> {
     double yPos = screenHeight * yPosScale;
     double width = screenWidth * widthScale;
 
-
     return StreamBuilder<CompassEvent>(
       stream: FlutterCompass.events,
       builder: (context, snapshot) {
@@ -364,8 +363,7 @@ class CompassState extends State<Compass> {
             top: yPos,
             width: width,
             height: width,
-            child:
-                const Text("Compass not found"),
+            child: const Text("Compass not found"),
           );
         }
 
