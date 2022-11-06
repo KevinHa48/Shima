@@ -15,6 +15,7 @@ class GPS {
   late StreamSubscription<Position> positionStream;
   late LocationPermission permission;
   late Timer pingTimer;
+  LatLng? srcPoint;
   bool started = false;
   int pingTime;
   int? startTime;
@@ -112,6 +113,9 @@ class GPS {
         (locations.last.latitude != newLocation.latitude &&
             locations.last.longitude != newLocation.longitude)) {
       locations = [...locations, newLocation];
+      if (srcPoint == null && locations.isNotEmpty) {
+        srcPoint = locations.first;
+      }
       if (addListener != null) {
         addListener!
             .notifyListeners(); //https://github.com/flutter/flutter/issues/29958
@@ -141,6 +145,9 @@ class GPS {
       }
     }
     newPath.addAll(locations.sublist(lastCycle, locations.length));
+    if (locations.isEmpty) {
+      locations.add(srcPoint!);
+    }
     locations = newPath;
   }
 
