@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
+import 'utilities/gps.dart';
 
 void main() {
   runApp(const MyApp());
@@ -54,31 +55,25 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final Completer<GoogleMapController> _controller = Completer();
   // @TODO: get user's current location and put that into LatLng
-  static const LatLng sourceLocation = LatLng(40.7429149, -74.1782508);
+  GPS gps = GPS();
 
   List<LatLng> polylineCoordinates = [];
-  LocationData? currentLocation;
-
-  // Updates our current location
-  void getCurrentLocation() {
-    Location location = Location();
-
-    location.getLocation().then(
-      (location) {
-        currentLocation = location;
-      },
-    );
-
-    location.onLocationChanged.listen((newLoc) {
-      currentLocation = newLoc;
-
-      setState(() {});
-    });
-  }
+  LatLng? currentLocation;
+  Set<Marker>? markers;
 
   @override
   void initState() {
-    getCurrentLocation();
+    if (!gps.started) {
+      gps.start();
+    }
+    ValueNotifier<List<LatLng>> _locations =
+        ValueNotifier<List<LatLng>>(gps.locations);
+    gps.addListener = _locations;
+    _locations.addListener(() {
+      currentLocation = gps.getLatestCoordinate();
+      markers = gps.generatePath();
+      setState(() {});
+    });
   }
 
   @override
@@ -89,8 +84,9 @@ class _MyHomePageState extends State<MyHomePage> {
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: currentLocation ==
-              null // Ternary to check whether currentLocation variable exists
+      body: currentLocation == null ||
+              markers ==
+                  null // Ternary to check whether currentLocation variable exists
           ? const Center(
               child: Text("Loading...")) // If null, display loading text
           : GoogleMap(
@@ -98,20 +94,11 @@ class _MyHomePageState extends State<MyHomePage> {
               mapType: MapType
                   .satellite, // map types: [roadmap, hybrid, terrain, satellite]
               initialCameraPosition: CameraPosition(
-                target: LatLng(
-                    // (currentLat, currentLong)
-                    currentLocation!.latitude!,
-                    currentLocation!.longitude!),
+                target: currentLocation!,
                 zoom: 8.5, // Camera zoom
               ),
               // Our markers
-              markers: {
-                  Marker(
-                    markerId: const MarkerId("currentLocation"),
-                    position: LatLng(currentLocation!.latitude!,
-                        currentLocation!.longitude!),
-                  )
-                }),
+              markers: markers!),
     );
   }
 }
