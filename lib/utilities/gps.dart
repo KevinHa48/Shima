@@ -1,6 +1,5 @@
 import 'dart:async';
-
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -63,12 +62,16 @@ class GPS {
     return false;
   }
 
-  Set<Marker> generatePath() {
-    Set<Marker> markers = {};
-    for (var i = 0; i < locations.length; i++) {
-      markers.add(Marker(markerId: MarkerId("$i"), position: locations[i]));
-    }
-    return markers;
+  Polyline generatePath() {
+    PolylineId id = const PolylineId("breadcrumb-trail");
+    Polyline polyline =
+        Polyline(polylineId: id, color: Colors.red, points: locations);
+    return polyline;
+    // Set<Marker> markers = {};
+    // for (var i = 0; i < locations.length; i++) {
+    //   markers.add(Marker(markerId: MarkerId("$i"), position: locations[i]));
+    // }
+    // return markers;
   }
 
   Future<void> ping() async {

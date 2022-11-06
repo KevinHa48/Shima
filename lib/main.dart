@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:location/location.dart';
 import 'utilities/gps.dart';
 
 void main() {
@@ -60,6 +59,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<LatLng> polylineCoordinates = [];
   LatLng? currentLocation;
   Set<Marker>? markers;
+  Set<Polyline> polylines = {};
 
   @override
   void initState() {
@@ -69,9 +69,10 @@ class _MyHomePageState extends State<MyHomePage> {
     ValueNotifier<List<LatLng>> _locations =
         ValueNotifier<List<LatLng>>(gps.locations);
     gps.addListener = _locations;
-    _locations.addListener(() {
+    _locations.addListener(() async {
       currentLocation = gps.getLatestCoordinate();
-      markers = gps.generatePath();
+      polylines = {};
+      polylines.add(gps.generatePath());
       setState(() {});
     });
   }
@@ -85,7 +86,7 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: currentLocation == null ||
-              markers ==
+              polylines ==
                   null // Ternary to check whether currentLocation variable exists
           ? const Center(
               child: Text("Loading...")) // If null, display loading text
@@ -98,7 +99,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 zoom: 8.5, // Camera zoom
               ),
               // Our markers
-              markers: markers!),
+              polylines: polylines),
     );
   }
 }
