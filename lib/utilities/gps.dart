@@ -1,18 +1,24 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'colors.dart';
+import './connectivity.dart';
 
 class GPS {
   List<LatLng> locations;
+  static const int maxDistance = 5;
   LocationSettings locationSettings = const LocationSettings(
-      accuracy: LocationAccuracy.best, distanceFilter: 100);
+      accuracy: LocationAccuracy.best, distanceFilter: maxDistance);
   late StreamSubscription<Position> positionStream;
   late LocationPermission permission;
   late Timer pingTimer;
   bool started = false;
   int pingTime;
+  int? startTime;
   late ValueNotifier<List<LatLng>>? addListener;
+  ConnectivityService connectionChecker = ConnectivityService();
 
   GPS({this.locations = const [], this.pingTime = 30});
 
@@ -43,15 +49,43 @@ class GPS {
     }
   }
 
-  Future<void> stop() async {
+  Future<Map<dynamic, dynamic>> stop() async {
     await positionStream.cancel();
     pingTimer.cancel();
     started = false;
+    return {
+      "breadCrumbs": locations.length,
+      "distance": getDistance(),
+      "duration": getDuration(),
+    };
+  }
+
+  String getDuration() {
+    Duration currentTime = Duration(
+        milliseconds: DateTime.now().millisecondsSinceEpoch - startTime!);
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String twoDigitMinutes = twoDigits(currentTime.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(currentTime.inSeconds.remainder(60));
+    return "${twoDigits(currentTime.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
+  }
+
+  double getDistance() {
+    double total = 0;
+    for (int i = 0; i < locations.length - 1; i++) {
+      total += Geolocator.distanceBetween(
+          locations[i].latitude,
+          locations[i].longitude,
+          locations[i + 1].latitude,
+          locations[i + 1].longitude);
+    }
+    return total;
   }
 
   addLocation(double lat, double lon) {
     LatLng newLocation = LatLng(lat, lon);
-    if (locations.isEmpty || locations.last != newLocation) {
+    if (locations.isEmpty ||
+        (locations.last.latitude != newLocation.latitude &&
+            locations.last.longitude != newLocation.longitude)) {
       locations = [...locations, newLocation];
       if (addListener != null) {
         addListener!
@@ -62,27 +96,53 @@ class GPS {
     return false;
   }
 
+  bool isNear(LatLng a, LatLng b) {
+    return Geolocator.distanceBetween(
+            a.latitude, a.longitude, b.latitude, b.longitude) <=
+        maxDistance;
+  }
+
+  void optimizePath() {
+    List<LatLng> newPath = [];
+    int lastCycle = 0;
+    for (int i = 3; i < locations.length; i++) {
+      for (int j = 0; j < i; j++) {
+        if (isNear(locations[i], locations[j])) {
+          if (j > lastCycle) {
+            newPath.addAll(locations.sublist(lastCycle, j));
+          }
+          lastCycle = i;
+        }
+      }
+    }
+    newPath.addAll(locations.sublist(lastCycle, locations.length));
+    locations = newPath;
+  }
+
   Polyline generatePath() {
+    optimizePath();
     PolylineId id = const PolylineId("breadcrumb-trail");
     Polyline polyline = Polyline(
         startCap: Cap.customCapFromBitmap(BitmapDescriptor.defaultMarkerWithHue(
             BitmapDescriptor.hueRed)), //TODO make custom start point
         endCap: Cap.roundCap,
         polylineId: id,
-        color: Colors.red,
+        color: ColorSelect().shimaRed,
         width: 4,
         points: locations);
     return polyline;
   }
 
   Future<void> ping() async {
+    // If connection is OK, continue with ping logic
     Position? position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.best);
-    //TODO check if there's connection
     addLocation(position.latitude, position.longitude);
   }
 
   Future<bool> start() async {
+    startTime = DateTime.now().millisecondsSinceEpoch;
+    locations = [];
     await _checkPermission();
     await _checkLocationServiceEnabled();
     //Get first position and add to path
@@ -93,13 +153,26 @@ class GPS {
         Geolocator.getPositionStream(locationSettings: locationSettings)
             .listen((Position? position) async {
       if (position != null) {
+        print(position.latitude);
         addLocation(position.latitude, position.longitude);
+        // } else {
+        //   // Connection is potentially dead here, begin manually pinging
+        //   pingTimer = Timer.periodic(
+        //       Duration(seconds: pingTime),
+        //       (Timer t) async => {
+        //             if (!connectionChecker.getConnectionStatus())
+        //               {
+        //                 // Connection is dead
+        //                 print('Im dead'),
+        //                 await stop(),
+        //                 t.cancel()
+        //               }
+        //             else
+        //               {print("Connection is still alive"), await ping()}
+        //           });
+        // }
       }
     });
-
-    //Startup timer
-    pingTimer = Timer.periodic(
-        Duration(seconds: pingTime), (Timer t) async => {ping()});
 
     started = true;
     return true;
