@@ -2,8 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:location/location.dart';
+
 import 'utilities/colors.dart';
+import 'utilities/gps.dart';
 
 void main() {
   runApp(const MyApp());
@@ -57,31 +58,26 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final Completer<GoogleMapController> _controller = Completer();
   // @TODO: get user's current location and put that into LatLng
-  static const LatLng sourceLocation = LatLng(40.7429149, -74.1782508);
+  GPS gps = GPS();
 
   List<LatLng> polylineCoordinates = [];
-  LocationData? currentLocation;
-
-  // Updates our current location
-  void getCurrentLocation() {
-    Location location = Location();
-
-    location.getLocation().then(
-      (location) {
-        currentLocation = location;
-      },
-    );
-
-    location.onLocationChanged.listen((newLoc) {
-      currentLocation = newLoc;
-
-      setState(() {});
-    });
-  }
+  LatLng? currentLocation;
+  Set<Polyline> polylines = {};
 
   @override
   void initState() {
-    getCurrentLocation();
+    if (!gps.started) {
+      gps.start();
+    }
+    ValueNotifier<List<LatLng>> _locations =
+        ValueNotifier<List<LatLng>>(gps.locations);
+    gps.addListener = _locations;
+    _locations.addListener(() async {
+      currentLocation = gps.getLatestCoordinate();
+      polylines = {};
+      polylines.add(gps.generatePath());
+      setState(() {});
+    });
   }
 
   @override
@@ -96,30 +92,23 @@ class _MyHomePageState extends State<MyHomePage> {
       body: SizedBox.expand(
         child: Stack(children: <Widget>[
           Align(
-            child: currentLocation ==
-                    null // Ternary to check whether currentLocation variable exists
+            child: currentLocation == null ||
+                    polylines ==
+                        null // Ternary to check whether currentLocation variable exists
                 ? const Center(
                     child: Text("Loading...")) // If null, display loading text
                 : GoogleMap(
-                    padding: const EdgeInsets.only(bottom: 100, left: 15),
                     // Otherwise, display the map
                     mapType: MapType
                         .satellite, // map types: [roadmap, hybrid, terrain, satellite]
                     initialCameraPosition: CameraPosition(
-                      target: LatLng(
-                          // (currentLat, currentLong)
-                          currentLocation!.latitude!,
-                          currentLocation!.longitude!),
-                      zoom: 16, // Camera zoom
+                      target: currentLocation!,
+                      zoom: 18, // Camera zoom
                     ),
                     // Our markers
-                    markers: {
-                        Marker(
-                          markerId: const MarkerId("currentLocation"),
-                          position: LatLng(currentLocation!.latitude!,
-                              currentLocation!.longitude!),
-                        )
-                      }),
+                    polylines: polylines,
+                    myLocationEnabled: true,
+                  ),
           ),
           SizedBox.expand(
               child: DraggableScrollableSheet(
@@ -132,9 +121,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   horizontal: 15,
                   vertical: 0,
                 ),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF1E1E1E),
-                  borderRadius: BorderRadius.only(
+                decoration: BoxDecoration(
+                  color: ColorSelect().darkGrey,
+                  borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(20),
                     topRight: Radius.circular(20),
                   ),
@@ -152,9 +141,9 @@ class _MyHomePageState extends State<MyHomePage> {
                               margin: const EdgeInsets.only(top: 20),
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Color(0xFF68869E),
+                                  backgroundColor: ColorSelect().shimaBlue,
                                 ),
-                                onPressed: getCurrentLocation,
+                                onPressed: initState,
                                 child: const Center(
                                   child: Text("Start"),
                                 ),
