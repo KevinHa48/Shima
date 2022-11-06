@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'colors.dart';
+import './connectivity.dart';
 
 class GPS {
   List<LatLng> locations;
@@ -17,6 +18,7 @@ class GPS {
   int pingTime;
   int? startTime;
   late ValueNotifier<List<LatLng>>? addListener;
+  ConnectivityService connectionChecker = ConnectivityService();
 
   GPS({this.locations = const [], this.pingTime = 30});
 
@@ -132,9 +134,9 @@ class GPS {
   }
 
   Future<void> ping() async {
+    // If connection is OK, continue with ping logic
     Position? position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.best);
-    //TODO check if there's connection
     addLocation(position.latitude, position.longitude);
   }
 
@@ -151,7 +153,24 @@ class GPS {
         Geolocator.getPositionStream(locationSettings: locationSettings)
             .listen((Position? position) async {
       if (position != null) {
+        print(position.latitude);
         addLocation(position.latitude, position.longitude);
+        // } else {
+        //   // Connection is potentially dead here, begin manually pinging
+        //   pingTimer = Timer.periodic(
+        //       Duration(seconds: pingTime),
+        //       (Timer t) async => {
+        //             if (!connectionChecker.getConnectionStatus())
+        //               {
+        //                 // Connection is dead
+        //                 print('Im dead'),
+        //                 await stop(),
+        //                 t.cancel()
+        //               }
+        //             else
+        //               {print("Connection is still alive"), await ping()}
+        //           });
+        // }
       }
     });
 
