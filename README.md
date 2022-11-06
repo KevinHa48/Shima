@@ -1,16 +1,20 @@
-# shima
+# Shima
 
-A new Flutter project.
+NJIT Hackathon 2022 Submission
 
-## Getting Started
+This is a app designed for hikers to mark a breadcrumb trail. The user can mark the location of his/her campsite, and the app will automatically keep track of a path from the start point until when the user loses signal. The app will warn the user that he/she lost signal so the user doesn't get lost.
 
-This project is a starting point for a Flutter application.
+This application only works on IOS and android.
 
-A few resources to get you started if this is your first Flutter project:
+## Required:
+- flutter
+- IOS/android virtual device or physical phone
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Recommended:
+- VSCode with flutter extension and dart extension
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Install:
+1. See https://docs.flutter.dev/get-started/install. Flutter must be installed. run `flutter doctor` and make sure everything is checked.
+2. clone the branch and run `flutter pub get`
+3. Set up a virtual device. See https://docs.flutter.dev/get-started/install
+4. Run `flutter run --release`
