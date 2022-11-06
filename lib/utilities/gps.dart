@@ -1,12 +1,14 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class GPS {
   List<LatLng> locations;
+  static const int maxDistance = 5;
   LocationSettings locationSettings = const LocationSettings(
-      accuracy: LocationAccuracy.best, distanceFilter: 100);
+      accuracy: LocationAccuracy.best, distanceFilter: maxDistance);
   late StreamSubscription<Position> positionStream;
   late LocationPermission permission;
   late Timer pingTimer;
@@ -51,7 +53,9 @@ class GPS {
 
   addLocation(double lat, double lon) {
     LatLng newLocation = LatLng(lat, lon);
-    if (locations.isEmpty || locations.last != newLocation) {
+    if (locations.isEmpty ||
+        (locations.last.latitude != newLocation.latitude &&
+            locations.last.longitude != newLocation.longitude)) {
       locations = [...locations, newLocation];
       if (addListener != null) {
         addListener!
@@ -62,7 +66,31 @@ class GPS {
     return false;
   }
 
+  bool isNear(LatLng a, LatLng b) {
+    return Geolocator.distanceBetween(
+            a.latitude, a.longitude, b.latitude, b.longitude) <=
+        maxDistance;
+  }
+
+  void optimizePath() {
+    List<LatLng> newPath = [];
+    int lastCycle = 0;
+    for (int i = 3; i < locations.length; i++) {
+      for (int j = 0; j < i; j++) {
+        if (isNear(locations[i], locations[j])) {
+          if (j > lastCycle) {
+            newPath.addAll(locations.sublist(lastCycle, j));
+          }
+          lastCycle = i;
+        }
+      }
+    }
+    newPath.addAll(locations.sublist(lastCycle, locations.length));
+    locations = newPath;
+  }
+
   Polyline generatePath() {
+    optimizePath();
     PolylineId id = const PolylineId("breadcrumb-trail");
     Polyline polyline = Polyline(
         startCap: Cap.customCapFromBitmap(BitmapDescriptor.defaultMarkerWithHue(
@@ -96,10 +124,6 @@ class GPS {
         addLocation(position.latitude, position.longitude);
       }
     });
-
-    //Startup timer
-    pingTimer = Timer.periodic(
-        Duration(seconds: pingTime), (Timer t) async => {ping()});
 
     started = true;
     return true;
