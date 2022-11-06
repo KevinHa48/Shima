@@ -2,10 +2,13 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import 'utilities/colors.dart';
 import 'utilities/gps.dart';
+import 'utilities/connectivity.dart';
+import 'notifications.dart';
 
 import 'package:flutter_compass/flutter_compass.dart';
 
@@ -63,31 +66,47 @@ class _MyHomePageState extends State<MyHomePage> {
   // @TODO: get user's current location and put that into LatLng
   GPS gps = GPS();
   Compass compass = const Compass();
+  ConnectivityService connectionCheck = ConnectivityService();
 
   List<LatLng> polylineCoordinates = [];
   LatLng? currentLocation;
   Set<Polyline> polylines = {};
   double distance = 0;
-  String time = "";
+  String time = "00:00:00";
   int breadCrumbs = 0;
   late Timer getTimeTimer;
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  startHandler() {
+    gps.start();
+    getTimeTimer = Timer.periodic(
+        //TODO when gps.stop is called, stop this timer as well.
+        //TODO implement this into front end
+        const Duration(seconds: 1),
+        (Timer t) => {
+              time = gps.getDuration(),
+              setState(() {})
+            }); //TODO test if this causes lag
+    connectionCheck.start();
+  }
+
+  stopHandler() {
+    gps.stop();
+    getTimeTimer.cancel();
+    setState(() {});
+  }
 
   @override
   void initState() {
-    if (!gps.started) {
-      gps.start();
-      getTimeTimer = Timer.periodic(
-          //TODO when gps.stop is called, stop this timer as well.
-          //TODO implement this into front end
-          const Duration(seconds: 1),
-          (Timer t) => {
-                time = gps.getDuration(),
-                setState(() {})
-              }); //TODO test if this causes lag
-    }
+    gps.ping();
+    Notifications.initialize(flutterLocalNotificationsPlugin);
     ValueNotifier<List<LatLng>> _locations =
         ValueNotifier<List<LatLng>>(gps.locations);
+    ValueNotifier<bool> connection =
+        ValueNotifier<bool>(connectionCheck.disconnected);
     gps.addListener = _locations;
+    connectionCheck.connectionListener = connection;
     _locations.addListener(() async {
       currentLocation = gps.getLatestCoordinate();
       polylines = {};
@@ -95,6 +114,14 @@ class _MyHomePageState extends State<MyHomePage> {
       distance = gps.getDistance(); //TODO implement this into front end
       breadCrumbs = gps.locations.length; //TODO implement this into front end
       setState(() {});
+    });
+    connection.addListener(() async {
+      if (connectionCheck.disconnected) {
+        Notifications.showBigTextNotification(
+            title: 'Shima',
+            body: 'Connection lost, trail saved.',
+            fln: flutterLocalNotificationsPlugin);
+      }
     });
   }
 
@@ -108,87 +135,175 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Colors.transparent,
       ),
       body: SizedBox.expand(
-        child: Stack(children: <Widget>[
-          Align(
-            child: currentLocation == null ||
-                    polylines ==
-                        null // Ternary to check whether currentLocation variable exists
-                ? const Center(
-                    child: Text("Loading...")) // If null, display loading text
-                : GoogleMap(
-                    // Otherwise, display the map
-                    mapType: MapType
-                        .satellite, // map types: [roadmap, hybrid, terrain, satellite]
-                    initialCameraPosition: CameraPosition(
-                      target: currentLocation!,
-                      zoom: 18, // Camera zoom
+        child: Stack(
+          children: <Widget>[
+            Align(
+              child: currentLocation == null ||
+                      polylines ==
+                          null // Ternary to check whether currentLocation variable exists
+                  ? const Center(
+                      child:
+                          Text("Loading...")) // If null, display loading text
+                  : GoogleMap(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 100,
+                      ),
+                      // Otherwise, display the map
+                      mapType: MapType
+                          .satellite, // map types: [roadmap, hybrid, terrain, satellite]
+                      initialCameraPosition: CameraPosition(
+                        target: currentLocation!,
+                        zoom: 18, // Camera zoom
+                      ),
+                      // Our markers
+                      polylines: polylines,
+                      myLocationEnabled: true,
                     ),
-                    // Our markers
-                    polylines: polylines,
-                    myLocationEnabled: true,
-                  ),
-          ),
-          SizedBox.expand(
+            ),
+            SizedBox.expand(
               child: DraggableScrollableSheet(
-            initialChildSize: 0.17,
-            minChildSize: 0.17,
-            maxChildSize: 0.4,
-            builder: (BuildContext c, s) {
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 15,
-                  vertical: 0,
-                ),
-                decoration: BoxDecoration(
-                  color: ColorSelect().darkGrey,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
-                ),
-                child: ListView(
-                  controller: s,
-                  children: <Widget>[
-                    Container(
-                        transform: Matrix4.translationValues(0.0, -50.0, 0.0),
-                        child: Stack(children: <Widget>[
-                          Center(
-                            child: Container(
-                              height: 40,
-                              width: 150,
-                              margin: const EdgeInsets.only(top: 20),
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: ColorSelect().shimaBlue,
+                initialChildSize: 0.17,
+                minChildSize: 0.17,
+                maxChildSize: 0.4,
+                builder: (BuildContext c, s) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 15,
+                      vertical: 0,
+                    ),
+                    decoration: BoxDecoration(
+                      color: ColorSelect().darkGrey,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(20),
+                        topRight: Radius.circular(20),
+                      ),
+                    ),
+                    child: ListView(
+                      controller: s,
+                      children: <Widget>[
+                        Transform.translate(
+                          offset: const Offset(0.0, -50.0),
+                          child: Container(
+                            child: Column(
+                              children: <Widget>[
+                                Center(
+                                  child: Container(
+                                    height: 3,
+                                    width: 50,
+                                    color: ColorSelect().shimaBlue,
+                                  ),
                                 ),
-                                onPressed: initState,
-                                child: const Center(
-                                  child: Text("Start"),
+                                Center(
+                                  child: Container(
+                                    height: 40,
+                                    width: 150,
+                                    margin: const EdgeInsets.only(top: 20),
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: gps.started == false
+                                            ? ColorSelect().shimaBlue
+                                            : ColorSelect().shimaRed,
+                                      ),
+                                      onPressed: gps.started == false
+                                          ? startHandler
+                                          : stopHandler,
+                                      child: Center(
+                                        child: gps.started == false
+                                            ? Text("Start")
+                                            : Text("End Route"),
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                SizedBox(height: 70),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: <Widget>[
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          time,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        SizedBox(height: 5),
+                                        const Text("Time",
+                                            style:
+                                                TextStyle(color: Colors.white)),
+                                      ],
+                                    ),
+                                    SizedBox(width: 30),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "${distance.roundToDouble()}m",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        SizedBox(height: 10),
+                                        const Text("Distance Away",
+                                            style:
+                                                TextStyle(color: Colors.white)),
+                                      ],
+                                    ),
+                                    SizedBox(width: 30),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          breadCrumbs.toString(),
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        SizedBox(height: 10),
+                                        const Text("Crumbs",
+                                            style:
+                                                TextStyle(color: Colors.white)),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
-                        ]))
-                  ],
-                ),
-              );
-            },
-          )),
-          compass
-        ]),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            compass,
+          ],
+        ),
       ),
       drawer: Drawer(
         child: ListView(
           children: [
             Align(
-                alignment: Alignment.centerLeft,
-                child: IconButton(
-                  icon: const Icon(Icons.close),
-                  color: Colors.black,
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                )),
+              alignment: Alignment.centerLeft,
+              child: IconButton(
+                icon: const Icon(Icons.close),
+                color: Colors.black,
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ),
             ListTile(
                 title: const Text('History', style: TextStyle(fontSize: 20)),
                 onTap: () {
@@ -256,12 +371,11 @@ class CompassState extends State<Compass> {
         // if loading, show loading indicator
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Positioned(
-            left: xPos,
-            top: yPos,
-            width: width,
-            height: height,
-            child: const CircularProgressIndicator()
-          );
+              left: xPos,
+              top: yPos,
+              width: width,
+              height: height,
+              child: const CircularProgressIndicator());
         }
 
         double? direction = snapshot.data!.heading;
@@ -273,37 +387,36 @@ class CompassState extends State<Compass> {
             top: yPos,
             width: width,
             height: height,
-            child: const Text("Compass not found"), // make sure this looks right
+            child:
+                const Text("Compass not found"), // make sure this looks right
           );
         }
 
         // show the compass
         return Positioned(
-          left: xPos,
-          top: yPos,
-          width: width,
-          height: height,
-          child: Material(
-            shape: const CircleBorder(),
-            clipBehavior: Clip.antiAlias,
-            elevation: 4.0,
-            child: Container(
-              padding: const EdgeInsets.all(16.0),
-              alignment: Alignment.center,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
+            left: xPos,
+            top: yPos,
+            width: width,
+            height: height,
+            child: Material(
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              elevation: 4.0,
+              child: Container(
+                padding: const EdgeInsets.all(16.0),
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                ),
+                child: Transform.rotate(
+                  angle: (direction * (math.pi / 180) * -1),
+                  child: Image.asset('assets/images/compass.png'),
+                ),
               ),
-              child: Transform.rotate(
-                angle: (direction * (math.pi / 180) * -1),
-                child: Image.asset('assets/images/compass.jpg'),
-              ),
-            ),
-          )
-        );
+            ));
       },
     );
   }
-
 }
 
 class Compass extends StatefulWidget {
