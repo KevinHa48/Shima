@@ -1,8 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'utilities/gps.dart';
+import 'utilities/connectivity.dart';
+import 'notifications.dart';
 
 void main() {
   runApp(const MyApp());
@@ -55,25 +58,41 @@ class _MyHomePageState extends State<MyHomePage> {
   final Completer<GoogleMapController> _controller = Completer();
   // @TODO: get user's current location and put that into LatLng
   GPS gps = GPS();
+  ConnectivityService connectionCheck = ConnectivityService();
 
   List<LatLng> polylineCoordinates = [];
   LatLng? currentLocation;
   Set<Marker>? markers;
   Set<Polyline> polylines = {};
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   @override
   void initState() {
+    Notifications.initialize(flutterLocalNotificationsPlugin);
     if (!gps.started) {
       gps.start();
+      connectionCheck.start();
     }
     ValueNotifier<List<LatLng>> _locations =
         ValueNotifier<List<LatLng>>(gps.locations);
+    ValueNotifier<bool> connection =
+        ValueNotifier<bool>(connectionCheck.disconnected);
     gps.addListener = _locations;
+    connectionCheck.connectionListener = connection;
     _locations.addListener(() async {
       currentLocation = gps.getLatestCoordinate();
       polylines = {};
       polylines.add(gps.generatePath());
       setState(() {});
+    });
+    connection.addListener(() async {
+      if (connectionCheck.disconnected) {
+        Notifications.showBigTextNotification(
+            title: 'Shima',
+            body: 'Connection lost, trail saved.',
+            fln: flutterLocalNotificationsPlugin);
+      }
     });
   }
 
