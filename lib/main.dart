@@ -74,21 +74,29 @@ class _MyHomePageState extends State<MyHomePage> {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
+  startHandler() {
+    gps.start();
+    getTimeTimer = Timer.periodic(
+        //TODO when gps.stop is called, stop this timer as well.
+        //TODO implement this into front end
+        const Duration(seconds: 1),
+        (Timer t) => {
+              time = gps.getDuration(),
+              setState(() {})
+            }); //TODO test if this causes lag
+    connectionCheck.start();
+  }
+
+  stopHandler() {
+    gps.stop();
+    getTimeTimer.cancel();
+    setState(() {});
+  }
+
   @override
   void initState() {
+    gps.ping();
     Notifications.initialize(flutterLocalNotificationsPlugin);
-    if (!gps.started) {
-      gps.start();
-      getTimeTimer = Timer.periodic(
-          //TODO when gps.stop is called, stop this timer as well.
-          //TODO implement this into front end
-          const Duration(seconds: 1),
-          (Timer t) => {
-                time = gps.getDuration(),
-                setState(() {})
-              }); //TODO test if this causes lag
-      connectionCheck.start();
-    }
     ValueNotifier<List<LatLng>> _locations =
         ValueNotifier<List<LatLng>>(gps.locations);
     ValueNotifier<bool> connection =
@@ -174,15 +182,33 @@ class _MyHomePageState extends State<MyHomePage> {
                               margin: const EdgeInsets.only(top: 20),
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: ColorSelect().shimaBlue,
+                                  backgroundColor: gps.started == false
+                                      ? ColorSelect().shimaBlue
+                                      : ColorSelect().shimaRed,
                                 ),
-                                onPressed: initState,
-                                child: const Center(
-                                  child: Text("Start"),
+                                onPressed: gps.started == false
+                                    ? startHandler
+                                    : stopHandler,
+                                child: Center(
+                                  child: gps.started == false
+                                      ? Text("Start")
+                                      : Text("End Route"),
                                 ),
                               ),
                             ),
                           ),
+                          Center(
+                            child: Container(
+                                height: 80,
+                                width: 200,
+                                child: Stack(
+                                  children: [
+                                    Container(),
+                                    Container(),
+                                    Container(),
+                                  ],
+                                )),
+                          )
                         ]))
                   ],
                 ),
