@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -10,16 +11,14 @@ class GPS {
   late StreamSubscription<Position> positionStream;
   late LocationPermission permission;
   late Timer pingTimer;
+  bool started = false;
   int pingTime;
+  late ValueNotifier<List<LatLng>>? addListener;
 
   GPS({this.locations = const [], this.pingTime = 30});
 
-  double getLatestLatitude() {
-    return locations.last.latitude;
-  }
-
-  double getLatestLongitude() {
-    return locations.last.longitude;
+  LatLng getLatestCoordinate() {
+    return locations.last;
   }
 
   Future<void> _checkLocationServiceEnabled() async {
@@ -48,12 +47,17 @@ class GPS {
   Future<void> stop() async {
     await positionStream.cancel();
     pingTimer.cancel();
+    started = false;
   }
 
   addLocation(double lat, double lon) {
     LatLng newLocation = LatLng(lat, lon);
     if (locations.isEmpty || locations.last != newLocation) {
       locations = [...locations, newLocation];
+      if (addListener != null) {
+        addListener!
+            .notifyListeners(); //https://github.com/flutter/flutter/issues/29958
+      }
       return true;
     }
     return false;
@@ -93,6 +97,7 @@ class GPS {
     pingTimer = Timer.periodic(
         Duration(seconds: pingTime), (Timer t) async => {ping()});
 
+    started = true;
     return true;
   }
 }

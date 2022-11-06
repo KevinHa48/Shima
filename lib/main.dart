@@ -55,50 +55,50 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final Completer<GoogleMapController> _controller = Completer();
   // @TODO: get user's current location and put that into LatLng
+  GPS gps = GPS();
 
   List<LatLng> polylineCoordinates = [];
-  LocationData? currentLocation;
-  GPS gps = GPS();
+  LatLng? currentLocation;
+  Set<Marker>? markers;
 
   @override
   void initState() {
-    gps.start(); //TODO this can throw an error. Implement frontend logic to capture that.
+    if (!gps.started) {
+      gps.start();
+    }
+    ValueNotifier<List<LatLng>> _locations =
+        ValueNotifier<List<LatLng>>(gps.locations);
+    gps.addListener = _locations;
+    _locations.addListener(() {
+      currentLocation = gps.getLatestCoordinate();
+      markers = gps.generatePath();
+      setState(() {});
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: gps.start(),
-        builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return Scaffold(
-              appBar: AppBar(
-                // Here we take the value from the MyHomePage object that was created by
-                // the App.build method, and use it to set our appbar title.
-                title: Text(widget.title),
+    return Scaffold(
+      appBar: AppBar(
+        // Here we take the value from the MyHomePage object that was created by
+        // the App.build method, and use it to set our appbar title.
+        title: Text(widget.title),
+      ),
+      body: currentLocation == null ||
+              markers ==
+                  null // Ternary to check whether currentLocation variable exists
+          ? const Center(
+              child: Text("Loading...")) // If null, display loading text
+          : GoogleMap(
+              // Otherwise, display the map
+              mapType: MapType
+                  .satellite, // map types: [roadmap, hybrid, terrain, satellite]
+              initialCameraPosition: CameraPosition(
+                target: currentLocation!,
+                zoom: 8.5, // Camera zoom
               ),
-              body: currentLocation ==
-                      null // Ternary to check whether currentLocation variable exists
-                  ? const Center(
-                      child:
-                          Text("Loading...")) // If null, display loading text
-                  : GoogleMap(
-                      // Otherwise, display the map
-                      mapType: MapType
-                          .satellite, // map types: [roadmap, hybrid, terrain, satellite]
-                      initialCameraPosition: CameraPosition(
-                        target: LatLng(
-                            // (currentLat, currentLong)
-                            gps.getLatestLatitude(),
-                            gps.getLatestLongitude()),
-                        zoom: 8.5, // Camera zoom
-                      ),
-                      // Our markers
-                      markers: gps.generatePath()),
-            );
-          } else {
-            return CircularProgressIndicator();
-          }
-        });
+              // Our markers
+              markers: markers!),
+    );
   }
 }
