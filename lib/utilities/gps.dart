@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'colors.dart';
 import './connectivity.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class GPS {
   List<LatLng> locations;
@@ -34,6 +35,33 @@ class GPS {
   }
 
   Future<void> _checkPermission() async {
+    // var status = await Permission.locationWhenInUse.status;
+    // if (!status.isGranted) {
+    //   var inUse = await Permission.locationWhenInUse.request();
+    //   if (inUse.isGranted) {
+    //     var locationAlways = await Permission.locationAlways.request();
+    //     if (locationAlways.isGranted) {
+    //     } else {}
+    //   } else {}
+    //   if (status.isPermanentlyDenied) {
+    //     //When the user previously rejected the permission and select never ask again
+    //     //Open the screen of settings
+    //     bool res = await openAppSettings();
+    //   }
+    // } else {
+    //   //In use is available, check the always in use
+    //   var status = await Permission.locationAlways.status;
+    //   if (!status.isGranted) {
+    //     var status = await Permission.locationAlways.request();
+    //     if (status.isGranted) {
+    //       //Do some stuff
+    //     } else {
+    //       //Do another stuff
+    //     }
+    //   } else {
+    //     //previously available, do some stuff or nothing
+    //   }
+    // }
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.deniedForever) {
       return Future.error(
@@ -43,9 +71,6 @@ class GPS {
       if (permission == LocationPermission.denied) {
         return Future.error("Location permissions are denied");
       }
-    } else if (permission == LocationPermission.whileInUse) {
-      return Future.error(
-          "Location permissions are only enabled when app is in use. Set permissions to 'always'");
     }
   }
 

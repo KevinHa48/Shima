@@ -132,6 +132,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: Text("Loading...")) // If null, display loading text
                 : GoogleMap(
                     // Otherwise, display the map
+                    padding: const EdgeInsets.symmetric(vertical: 100),
                     mapType: MapType
                         .satellite, // map types: [roadmap, hybrid, terrain, satellite]
                     initialCameraPosition: CameraPosition(
