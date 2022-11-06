@@ -115,16 +115,16 @@ class _MyHomePageState extends State<MyHomePage> {
         SizedBox.expand(
             child: DraggableScrollableSheet(
           initialChildSize: 0.25,
-          minChildSize: 0.12,
+          minChildSize: 0.15,
           maxChildSize: 0.4,
           builder: (BuildContext c, s) {
             return Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 15,
-                  vertical: 10,
+                  vertical: 0,
                 ),
                 decoration: const BoxDecoration(
-                    color: Colors.black12,
+                    color: Color(0xFF1E1E1E),
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(20),
                       topRight: Radius.circular(20),
@@ -138,13 +138,16 @@ class _MyHomePageState extends State<MyHomePage> {
                   controller: s,
                   children: <Widget>[
                     Center(
-                        child: Container(
-                      height: 8,
-                      width: 50,
-                      decoration: BoxDecoration(
-                          color: Colors.grey,
-                          borderRadius: BorderRadius.circular(5)),
-                    ))
+                      child: Container(
+                        height: 3,
+                        width: 50,
+                        decoration: BoxDecoration(
+                            color: const Color(0xFF68869E),
+                            borderRadius: BorderRadius.circular(5)),
+                      ),
+                    ),
+                    TextButton(
+                        onPressed: getCurrentLocation, child: Text("Start"))
                   ],
                 ));
           },
