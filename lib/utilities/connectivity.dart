@@ -33,7 +33,6 @@ class ConnectivityService {
     const oneSec = Duration(seconds: 5);
     Future.delayed(oneSec, (() {
       if (disconnected) {
-        print('User is off the grid.');
         hasConnection = false;
         connectionListener.notifyListeners();
       }

@@ -88,7 +88,6 @@ class _MyHomePageState extends State<MyHomePage> {
               time = gps.getDuration(),
               setState(() {})
             }); //TODO test if this causes lag
-    connectionCheck.start();
   }
 
   stopHandler() {
@@ -100,6 +99,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     gps.ping();
+    connectionCheck.start();
     Notifications.initialize(flutterLocalNotificationsPlugin);
     ValueNotifier<List<LatLng>> _locations =
         ValueNotifier<List<LatLng>>(gps.locations);
@@ -117,7 +117,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     connection.addListener(() async {
       if (connectionCheck.disconnected) {
-        Notifications.showBigTextNotification(
+        await Notifications.showBigTextNotification(
             title: 'Shima',
             body: 'Connection lost, trail saved.',
             fln: flutterLocalNotificationsPlugin);
@@ -337,7 +337,6 @@ class CompassState extends State<Compass> {
     double yPos = screenHeight * yPosScale;
     double width = screenWidth * widthScale;
 
-
     return StreamBuilder<CompassEvent>(
       stream: FlutterCompass.events,
       builder: (context, snapshot) {
@@ -364,8 +363,7 @@ class CompassState extends State<Compass> {
             top: yPos,
             width: width,
             height: width,
-            child:
-                const Text("Compass not found"),
+            child: const Text("Compass not found"),
           );
         }
 

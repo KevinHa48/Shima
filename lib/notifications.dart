@@ -1,4 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter/material.dart';
 
 class Notifications {
   static Future initialize(
@@ -7,6 +8,7 @@ class Notifications {
     const iosInit = DarwinInitializationSettings();
     const initSettings =
         InitializationSettings(android: androidInit, iOS: iosInit);
+    debugPrint('In init for notifs.');
     await flutterLocalNotificationsPlugin.initialize(initSettings);
   }
 
@@ -15,6 +17,7 @@ class Notifications {
       required String body,
       var payload,
       required FlutterLocalNotificationsPlugin fln}) async {
+    debugPrint('hello');
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails('shima_activate', 'shima_default_channel',
             importance: Importance.max, priority: Priority.high);

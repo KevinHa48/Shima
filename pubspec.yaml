@@ -29,14 +29,14 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  flutter:
+    sdk: flutter
   google_maps_flutter: ^2.2.1
   google_maps_flutter_web: ^0.4.0+3
   flutter_polyline_points: ^1.0.0
   flutter_compass: "^0.7.0"
   permission_handler: "^10.2.0"
   location: ^4.4.0
-  flutter:
-    sdk: flutter
   geolocator: ^9.0.2
   geolocator_windows: ^0.1.1
 
