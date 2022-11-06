@@ -116,7 +116,7 @@ class _MyHomePageState extends State<MyHomePage> {
             child: DraggableScrollableSheet(
           initialChildSize: 0.25,
           minChildSize: 0.12,
-          maxChildSize: 0.8,
+          maxChildSize: 0.4,
           builder: (BuildContext c, s) {
             return Container(
                 padding: const EdgeInsets.symmetric(
@@ -132,7 +132,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black,
-                        blurRadius: 10,
                       )
                     ]),
                 child: ListView(
