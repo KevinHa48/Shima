@@ -325,32 +325,9 @@ class _MyHomePageState extends State<MyHomePage> {
 class CompassState extends State<Compass> {
   double? direction;
   bool maximized = false;
-  double xPosScale = 0.75;
-  double yPosScale = 0.8;
+  double xPosScale = 0.76;
+  double yPosScale = 0.12;
   double widthScale = 0.2;
-  double heightScale = 0.2;
-
-  void min() {
-    maximized = false;
-    xPosScale = 0.75;
-    yPosScale = 0.6;
-    widthScale = 0.2;
-    heightScale = 0.2;
-  }
-
-  void max() {
-    maximized = true;
-    xPosScale = 0;
-    yPosScale = 0;
-    widthScale = 1;
-    heightScale = 1;
-  }
-
-  @override
-  initState() {
-    super.initState();
-    min();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -359,7 +336,7 @@ class CompassState extends State<Compass> {
     double xPos = screenWidth * xPosScale;
     double yPos = screenHeight * yPosScale;
     double width = screenWidth * widthScale;
-    double height = screenHeight * heightScale;
+
 
     return StreamBuilder<CompassEvent>(
       stream: FlutterCompass.events,
@@ -374,7 +351,7 @@ class CompassState extends State<Compass> {
               left: xPos,
               top: yPos,
               width: width,
-              height: height,
+              height: width,
               child: const CircularProgressIndicator());
         }
 
@@ -386,9 +363,9 @@ class CompassState extends State<Compass> {
             left: xPos,
             top: yPos,
             width: width,
-            height: height,
+            height: width,
             child:
-                const Text("Compass not found"), // make sure this looks right
+                const Text("Compass not found"),
           );
         }
 
@@ -397,7 +374,7 @@ class CompassState extends State<Compass> {
             left: xPos,
             top: yPos,
             width: width,
-            height: height,
+            height: width,
             child: Material(
               shape: const CircleBorder(),
               clipBehavior: Clip.antiAlias,
