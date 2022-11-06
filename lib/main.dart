@@ -115,7 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
         SizedBox.expand(
             child: DraggableScrollableSheet(
           initialChildSize: 0.25,
-          minChildSize: 0.15,
+          minChildSize: 0.17,
           maxChildSize: 0.4,
           builder: (BuildContext c, s) {
             return Container(
@@ -146,8 +146,18 @@ class _MyHomePageState extends State<MyHomePage> {
                             borderRadius: BorderRadius.circular(5)),
                       ),
                     ),
-                    TextButton(
-                        onPressed: getCurrentLocation, child: Text("Start"))
+                    Container(
+                      margin: const EdgeInsets.only(top: 20),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFF68869E),
+                        ),
+                        onPressed: getCurrentLocation,
+                        child: const Center(
+                          child: Text("Start"),
+                        ),
+                      ),
+                    ),
                   ],
                 ));
           },
