@@ -46,7 +46,6 @@ dependencies:
   connectivity_plus: ^3.0.2
   provider: ^6.0.4
   flutter_local_notifications: ^12.0.3
-  permission_handler: ^10.2.0
 
 dev_dependencies:
   flutter_test:
