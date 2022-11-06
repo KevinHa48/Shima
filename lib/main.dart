@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -8,6 +9,8 @@ import 'utilities/colors.dart';
 import 'utilities/gps.dart';
 import 'utilities/connectivity.dart';
 import 'notifications.dart';
+
+import 'package:flutter_compass/flutter_compass.dart';
 
 void main() {
   runApp(const MyApp());
@@ -62,6 +65,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final Completer<GoogleMapController> _controller = Completer();
   // @TODO: get user's current location and put that into LatLng
   GPS gps = GPS();
+  Compass compass = const Compass();
   ConnectivityService connectionCheck = ConnectivityService();
 
   List<LatLng> polylineCoordinates = [];
@@ -282,7 +286,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   );
                 },
               ),
-            )
+            ),
+            compass,
           ],
         ),
       ),
@@ -315,4 +320,85 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+}
+
+class CompassState extends State<Compass> {
+  double? direction;
+  bool maximized = false;
+  double xPosScale = 0.76;
+  double yPosScale = 0.12;
+  double widthScale = 0.2;
+
+  @override
+  Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+    double xPos = screenWidth * xPosScale;
+    double yPos = screenHeight * yPosScale;
+    double width = screenWidth * widthScale;
+
+
+    return StreamBuilder<CompassEvent>(
+      stream: FlutterCompass.events,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Text('Error reading heading: ${snapshot.error}');
+        }
+
+        // if loading, show loading indicator
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Positioned(
+              left: xPos,
+              top: yPos,
+              width: width,
+              height: width,
+              child: const CircularProgressIndicator());
+        }
+
+        double? direction = snapshot.data!.heading;
+
+        // if direction is null, show error text
+        if (direction == null) {
+          return Positioned(
+            left: xPos,
+            top: yPos,
+            width: width,
+            height: width,
+            child:
+                const Text("Compass not found"),
+          );
+        }
+
+        // show the compass
+        return Positioned(
+            left: xPos,
+            top: yPos,
+            width: width,
+            height: width,
+            child: Material(
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              elevation: 4.0,
+              child: Container(
+                padding: const EdgeInsets.all(16.0),
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                ),
+                child: Transform.rotate(
+                  angle: (direction * (math.pi / 180) * -1),
+                  child: Image.asset('assets/images/compass.png'),
+                ),
+              ),
+            ));
+      },
+    );
+  }
+}
+
+class Compass extends StatefulWidget {
+  const Compass({super.key});
+
+  @override
+  State<Compass> createState() => CompassState();
 }
