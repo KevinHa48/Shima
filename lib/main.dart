@@ -8,6 +8,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'utilities/colors.dart';
 import 'utilities/gps.dart';
 import 'utilities/connectivity.dart';
+import 'utilities/stopconfirm.dart';
 import 'notifications.dart';
 
 import 'package:flutter_compass/flutter_compass.dart';
@@ -67,6 +68,7 @@ class _MyHomePageState extends State<MyHomePage> {
   GPS gps = GPS();
   Compass compass = const Compass();
   ConnectivityService connectionCheck = ConnectivityService();
+  bool confApproved = true;
 
   List<LatLng> polylineCoordinates = [];
   LatLng? currentLocation;
@@ -92,9 +94,15 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   stopHandler() {
-    gps.stop();
-    getTimeTimer.cancel();
-    setState(() {});
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => StopConfirm()),
+    );
+    if (StopConfirm.confirmed!) {
+      gps.stop();
+      getTimeTimer.cancel();
+      setState(() {});
+    }
   }
 
   @override
@@ -322,7 +330,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class CompassState extends State<Compass> {
+class _CompassState extends State<Compass> {
   double? direction;
   bool maximized = false;
   double xPosScale = 0.76;
@@ -396,9 +404,38 @@ class CompassState extends State<Compass> {
   }
 }
 
-class Compass extends StatefulWidget {
-  const Compass({super.key});
+// class startButton extends StatelessWidget{
+//   @override
+//   Widget build(BuildContext context, GPS gps){
+//     return Center(
+//       child: Container(
+//         height: 40,
+//         width: 150,
+//         margin: const EdgeInsets.only(top: 20),
+//         child: ElevatedButton(
+//           onPressed: gps.started == false
+//               ? startHandler
+//               : stopHandler,
+//           style: ElevatedButton.styleFrom(
+//             backgroundColor: gps.started == false
+//                 ? ColorSelect().shimaBlue
+//                 : ColorSelect().shimaRed,
+//           ),
+//           child: Center(
+//             child: gps.started == false
+//                 ? Text("Start")
+//                 : Text("End Route"),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
 
-  @override
-  State<Compass> createState() => CompassState();
-}
+  class Compass extends StatefulWidget {
+    const Compass({super.key});
+
+    @override
+    State<Compass> createState() => _CompassState();
+  }
+
