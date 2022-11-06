@@ -63,11 +63,23 @@ class _MyHomePageState extends State<MyHomePage> {
   List<LatLng> polylineCoordinates = [];
   LatLng? currentLocation;
   Set<Polyline> polylines = {};
+  double distance = 0;
+  String time = "";
+  int breadCrumbs = 0;
+  late Timer getTimeTimer;
 
   @override
   void initState() {
     if (!gps.started) {
       gps.start();
+      getTimeTimer = Timer.periodic(
+          //TODO when gps.stop is called, stop this timer as well.
+          //TODO implement this into front end
+          const Duration(seconds: 1),
+          (Timer t) => {
+                time = gps.getDuration(),
+                setState(() {})
+              }); //TODO test if this causes lag
     }
     ValueNotifier<List<LatLng>> _locations =
         ValueNotifier<List<LatLng>>(gps.locations);
@@ -76,6 +88,8 @@ class _MyHomePageState extends State<MyHomePage> {
       currentLocation = gps.getLatestCoordinate();
       polylines = {};
       polylines.add(gps.generatePath());
+      distance = gps.getDistance(); //TODO implement this into front end
+      breadCrumbs = gps.locations.length; //TODO implement this into front end
       setState(() {});
     });
   }
