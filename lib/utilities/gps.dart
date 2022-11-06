@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'colors.dart';
 
 class GPS {
   List<LatLng> locations;
@@ -14,6 +15,7 @@ class GPS {
   late Timer pingTimer;
   bool started = false;
   int pingTime;
+  int? startTime;
   late ValueNotifier<List<LatLng>>? addListener;
 
   GPS({this.locations = const [], this.pingTime = 30});
@@ -45,10 +47,36 @@ class GPS {
     }
   }
 
-  Future<void> stop() async {
+  Future<Map<dynamic, dynamic>> stop() async {
     await positionStream.cancel();
     pingTimer.cancel();
     started = false;
+    return {
+      "breadCrumbs": locations.length,
+      "distance": getDistance(),
+      "duration": getDuration(),
+    };
+  }
+
+  String getDuration() {
+    Duration currentTime = Duration(
+        milliseconds: DateTime.now().millisecondsSinceEpoch - startTime!);
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String twoDigitMinutes = twoDigits(currentTime.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(currentTime.inSeconds.remainder(60));
+    return "${twoDigits(currentTime.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
+  }
+
+  double getDistance() {
+    double total = 0;
+    for (int i = 0; i < locations.length - 1; i++) {
+      total += Geolocator.distanceBetween(
+          locations[i].latitude,
+          locations[i].longitude,
+          locations[i + 1].latitude,
+          locations[i + 1].longitude);
+    }
+    return total;
   }
 
   addLocation(double lat, double lon) {
@@ -97,7 +125,7 @@ class GPS {
             BitmapDescriptor.hueRed)), //TODO make custom start point
         endCap: Cap.roundCap,
         polylineId: id,
-        color: Colors.red,
+        color: ColorSelect().shimaRed,
         width: 4,
         points: locations);
     return polyline;
@@ -111,6 +139,8 @@ class GPS {
   }
 
   Future<bool> start() async {
+    startTime = DateTime.now().millisecondsSinceEpoch;
+    locations = [];
     await _checkPermission();
     await _checkLocationServiceEnabled();
     //Get first position and add to path
