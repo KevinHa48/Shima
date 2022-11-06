@@ -17,6 +17,8 @@ class GPS {
   late Timer pingTimer;
   LatLng? srcPoint;
   bool started = false;
+  bool powerSaving = false;
+  bool allowLoops = true;
   int pingTime;
   int? startTime;
   late ValueNotifier<List<LatLng>>? addListener;
@@ -30,7 +32,6 @@ class GPS {
 
   Future<Position> getHeading() async {
     return await Geolocator.getCurrentPosition();
-    ;
   }
 
   Future<void> _checkLocationServiceEnabled() async {
@@ -156,8 +157,11 @@ class GPS {
     locations = newPath;
   }
 
-  Future<Polyline> generatePath() async {
-    optimizePath();
+  Future Polyline generatePath() {
+    if (allowLoops) {
+      debugPrint('Loops are allowed!');
+      optimizePath();
+    }
     PolylineId id = const PolylineId("breadcrumb-trail");
     ByteData byteData = await rootBundle
         .load("assets/images/Yuru_Camp_manga_logo_yellow_tent-sharp.bmp");
@@ -177,7 +181,8 @@ class GPS {
   Future<void> ping() async {
     // If connection is OK, continue with ping logic
     Position? position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.best);
+        desiredAccuracy:
+            (powerSaving ? LocationAccuracy.high : LocationAccuracy.best));
     addLocation(position.latitude, position.longitude);
   }
 

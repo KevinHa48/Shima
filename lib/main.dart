@@ -318,17 +318,32 @@ class _MyHomePageState extends State<MyHomePage> {
                 },
               ),
             ),
-            ListTile(
-                title: const Text('History', style: TextStyle(fontSize: 20)),
-                onTap: () {
-                  Navigator.pop(context);
-                }),
-            ListTile(
-              title: const Text('Settings', style: TextStyle(fontSize: 20)),
-              onTap: () {
-                Navigator.pop(context);
+            const ListTile(
+                title: Text('Shima',
+                    style: TextStyle(
+                      fontFamily: "LucidaFax",
+                      fontSize: 25,
+                    ))),
+            SwitchListTile(
+              title: const Text('Power Saving Mode'),
+              value: gps.powerSaving,
+              onChanged: (bool value) {
+                setState(() {
+                  gps.powerSaving = value;
+                });
               },
-            )
+              secondary: const Icon(Icons.power),
+            ),
+            SwitchListTile(
+              title: const Text('Allow Trail Loops'),
+              value: gps.allowLoops,
+              onChanged: (bool value) {
+                setState(() {
+                  gps.allowLoops = value;
+                });
+              },
+              secondary: const Icon(Icons.loop),
+            ),
           ],
         ),
       ),
