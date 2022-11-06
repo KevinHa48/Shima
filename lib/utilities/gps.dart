@@ -28,6 +28,11 @@ class GPS {
     return locations.last;
   }
 
+  Future<Position> getHeading() async {
+    return await Geolocator.getCurrentPosition();
+    ;
+  }
+
   Future<void> _checkLocationServiceEnabled() async {
     bool isLocationServiceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!isLocationServiceEnabled) {

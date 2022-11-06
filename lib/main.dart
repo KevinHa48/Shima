@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -109,6 +110,15 @@ class _MyHomePageState extends State<MyHomePage> {
     connectionCheck.connectionListener = connection;
     _locations.addListener(() async {
       currentLocation = gps.getLatestCoordinate();
+      Position position = await gps.getHeading();
+      mapController
+          ?.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
+        target: currentLocation!,
+        zoom: 25,
+        bearing: position.heading,
+      )
+              //17 is new zoom level
+              ));
       polylines = {};
       polylines.add(gps.generatePath());
       distance = gps.getDistance(); //TODO implement this into front end
@@ -124,6 +134,8 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     });
   }
+
+  GoogleMapController? mapController;
 
   @override
   Widget build(BuildContext context) {
@@ -145,9 +157,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       child:
                           Text("Loading...")) // If null, display loading text
                   : GoogleMap(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 100,
-                      ),
                       // Otherwise, display the map
                       mapType: MapType
                           .satellite, // map types: [roadmap, hybrid, terrain, satellite]
@@ -158,6 +167,11 @@ class _MyHomePageState extends State<MyHomePage> {
                       // Our markers
                       polylines: polylines,
                       myLocationEnabled: true,
+                      onMapCreated: (controller) {
+                        setState(() {
+                          mapController = controller;
+                        });
+                      },
                     ),
             ),
             SizedBox.expand(
@@ -376,9 +390,10 @@ class CompassState extends State<Compass> {
             child: Material(
               shape: const CircleBorder(),
               clipBehavior: Clip.antiAlias,
+              color: ColorSelect().shimaBeige,
               elevation: 4.0,
               child: Container(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(2.0),
                 alignment: Alignment.center,
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
