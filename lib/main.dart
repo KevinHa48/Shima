@@ -101,7 +101,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ? const Center(
                     child: Text("Loading...")) // If null, display loading text
                 : GoogleMap(
-                    padding: EdgeInsets.only(bottom: 100, left: 15),
+                    padding: const EdgeInsets.only(bottom: 100, left: 15),
                     // Otherwise, display the map
                     mapType: MapType
                         .satellite, // map types: [roadmap, hybrid, terrain, satellite]
@@ -123,39 +123,48 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           SizedBox.expand(
               child: DraggableScrollableSheet(
-            initialChildSize: 0.25,
-            minChildSize: 0.12,
+            initialChildSize: 0.17,
+            minChildSize: 0.17,
             maxChildSize: 0.4,
             builder: (BuildContext c, s) {
               return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 15,
-                    vertical: 10,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 15,
+                  vertical: 0,
+                ),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF1E1E1E),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
                   ),
-                  decoration: const BoxDecoration(
-                      color: Colors.black12,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(20),
-                        topRight: Radius.circular(20),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black,
-                        )
-                      ]),
-                  child: ListView(
-                    controller: s,
-                    children: <Widget>[
-                      Center(
-                          child: Container(
-                        height: 8,
-                        width: 50,
-                        decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.circular(5)),
-                      ))
-                    ],
-                  ));
+                ),
+                child: ListView(
+                  controller: s,
+                  children: <Widget>[
+                    Container(
+                        transform: Matrix4.translationValues(0.0, -50.0, 0.0),
+                        child: Stack(children: <Widget>[
+                          Center(
+                            child: Container(
+                              height: 40,
+                              width: 150,
+                              margin: const EdgeInsets.only(top: 20),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Color(0xFF68869E),
+                                ),
+                                onPressed: getCurrentLocation,
+                                child: const Center(
+                                  child: Text("Start"),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ]))
+                  ],
+                ),
+              );
             },
           ))
         ]),
