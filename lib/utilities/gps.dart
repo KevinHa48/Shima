@@ -157,7 +157,7 @@ class GPS {
     locations = newPath;
   }
 
-  Future Polyline generatePath() {
+  Future<Polyline> generatePath() async {
     if (allowLoops) {
       debugPrint('Loops are allowed!');
       optimizePath();
