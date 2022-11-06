@@ -68,27 +68,35 @@ class _MyHomePageState extends State<MyHomePage> {
   LatLng? currentLocation;
   Set<Polyline> polylines = {};
   double distance = 0;
-  String time = "";
+  String time = "00:00:00";
   int breadCrumbs = 0;
   late Timer getTimeTimer;
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
+  startHandler() {
+    gps.start();
+    getTimeTimer = Timer.periodic(
+        //TODO when gps.stop is called, stop this timer as well.
+        //TODO implement this into front end
+        const Duration(seconds: 1),
+        (Timer t) => {
+              time = gps.getDuration(),
+              setState(() {})
+            }); //TODO test if this causes lag
+    connectionCheck.start();
+  }
+
+  stopHandler() {
+    gps.stop();
+    getTimeTimer.cancel();
+    setState(() {});
+  }
+
   @override
   void initState() {
+    gps.ping();
     Notifications.initialize(flutterLocalNotificationsPlugin);
-    if (!gps.started) {
-      gps.start();
-      getTimeTimer = Timer.periodic(
-          //TODO when gps.stop is called, stop this timer as well.
-          //TODO implement this into front end
-          const Duration(seconds: 1),
-          (Timer t) => {
-                time = gps.getDuration(),
-                setState(() {})
-              }); //TODO test if this causes lag
-      connectionCheck.start();
-    }
     ValueNotifier<List<LatLng>> _locations =
         ValueNotifier<List<LatLng>>(gps.locations);
     ValueNotifier<bool> connection =
@@ -123,86 +131,174 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Colors.transparent,
       ),
       body: SizedBox.expand(
-        child: Stack(children: <Widget>[
-          Align(
-            child: currentLocation == null ||
-                    polylines ==
-                        null // Ternary to check whether currentLocation variable exists
-                ? const Center(
-                    child: Text("Loading...")) // If null, display loading text
-                : GoogleMap(
-                    // Otherwise, display the map
-                    mapType: MapType
-                        .satellite, // map types: [roadmap, hybrid, terrain, satellite]
-                    initialCameraPosition: CameraPosition(
-                      target: currentLocation!,
-                      zoom: 18, // Camera zoom
+        child: Stack(
+          children: <Widget>[
+            Align(
+              child: currentLocation == null ||
+                      polylines ==
+                          null // Ternary to check whether currentLocation variable exists
+                  ? const Center(
+                      child:
+                          Text("Loading...")) // If null, display loading text
+                  : GoogleMap(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 100,
+                      ),
+                      // Otherwise, display the map
+                      mapType: MapType
+                          .satellite, // map types: [roadmap, hybrid, terrain, satellite]
+                      initialCameraPosition: CameraPosition(
+                        target: currentLocation!,
+                        zoom: 18, // Camera zoom
+                      ),
+                      // Our markers
+                      polylines: polylines,
+                      myLocationEnabled: true,
                     ),
-                    // Our markers
-                    polylines: polylines,
-                    myLocationEnabled: true,
-                  ),
-          ),
-          SizedBox.expand(
+            ),
+            SizedBox.expand(
               child: DraggableScrollableSheet(
-            initialChildSize: 0.17,
-            minChildSize: 0.17,
-            maxChildSize: 0.4,
-            builder: (BuildContext c, s) {
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 15,
-                  vertical: 0,
-                ),
-                decoration: BoxDecoration(
-                  color: ColorSelect().darkGrey,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
-                ),
-                child: ListView(
-                  controller: s,
-                  children: <Widget>[
-                    Container(
-                        transform: Matrix4.translationValues(0.0, -50.0, 0.0),
-                        child: Stack(children: <Widget>[
-                          Center(
-                            child: Container(
-                              height: 40,
-                              width: 150,
-                              margin: const EdgeInsets.only(top: 20),
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: ColorSelect().shimaBlue,
+                initialChildSize: 0.17,
+                minChildSize: 0.17,
+                maxChildSize: 0.4,
+                builder: (BuildContext c, s) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 15,
+                      vertical: 0,
+                    ),
+                    decoration: BoxDecoration(
+                      color: ColorSelect().darkGrey,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(20),
+                        topRight: Radius.circular(20),
+                      ),
+                    ),
+                    child: ListView(
+                      controller: s,
+                      children: <Widget>[
+                        Transform.translate(
+                          offset: const Offset(0.0, -50.0),
+                          child: Container(
+                            child: Column(
+                              children: <Widget>[
+                                Center(
+                                  child: Container(
+                                    height: 3,
+                                    width: 50,
+                                    color: ColorSelect().shimaBlue,
+                                  ),
                                 ),
-                                onPressed: initState,
-                                child: const Center(
-                                  child: Text("Start"),
+                                Center(
+                                  child: Container(
+                                    height: 40,
+                                    width: 150,
+                                    margin: const EdgeInsets.only(top: 20),
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: gps.started == false
+                                            ? ColorSelect().shimaBlue
+                                            : ColorSelect().shimaRed,
+                                      ),
+                                      onPressed: gps.started == false
+                                          ? startHandler
+                                          : stopHandler,
+                                      child: Center(
+                                        child: gps.started == false
+                                            ? Text("Start")
+                                            : Text("End Route"),
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                SizedBox(height: 70),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: <Widget>[
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          time,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        SizedBox(height: 5),
+                                        const Text("Time",
+                                            style:
+                                                TextStyle(color: Colors.white)),
+                                      ],
+                                    ),
+                                    SizedBox(width: 30),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "${distance.roundToDouble()}m",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        SizedBox(height: 10),
+                                        const Text("Distance Away",
+                                            style:
+                                                TextStyle(color: Colors.white)),
+                                      ],
+                                    ),
+                                    SizedBox(width: 30),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          breadCrumbs.toString(),
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        SizedBox(height: 10),
+                                        const Text("Crumbs",
+                                            style:
+                                                TextStyle(color: Colors.white)),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
-                        ]))
-                  ],
-                ),
-              );
-            },
-          ))
-        ]),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            )
+          ],
+        ),
       ),
       drawer: Drawer(
         child: ListView(
           children: [
             Align(
-                alignment: Alignment.centerLeft,
-                child: IconButton(
-                  icon: const Icon(Icons.close),
-                  color: Colors.black,
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                )),
+              alignment: Alignment.centerLeft,
+              child: IconButton(
+                icon: const Icon(Icons.close),
+                color: Colors.black,
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ),
             ListTile(
                 title: const Text('History', style: TextStyle(fontSize: 20)),
                 onTap: () {

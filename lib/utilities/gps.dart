@@ -51,7 +51,7 @@ class GPS {
 
   Future<Map<dynamic, dynamic>> stop() async {
     await positionStream.cancel();
-    pingTimer.cancel();
+    // pingTimer.cancel();
     started = false;
     return {
       "breadCrumbs": locations.length,
