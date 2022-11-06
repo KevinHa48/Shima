@@ -58,7 +58,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<LatLng> polylineCoordinates = [];
   LatLng? currentLocation;
-  Set<Marker>? markers;
   Set<Polyline> polylines = {};
 
   @override
@@ -99,7 +98,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 zoom: 8.5, // Camera zoom
               ),
               // Our markers
-              polylines: polylines),
+              polylines: polylines,
+              myLocationEnabled: true,
+            ),
     );
   }
 }
