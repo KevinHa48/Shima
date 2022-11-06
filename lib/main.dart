@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+
+import 'utilities/colors.dart';
 import 'utilities/gps.dart';
 
 void main() {
@@ -17,6 +19,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
+        canvasColor: ColorSelect().shimaGreen,
         // This is the theme of your application.
         //
         // Try running your application with "flutter run". You'll see the
@@ -26,6 +29,7 @@ class MyApp extends StatelessWidget {
         // or simply save your changes to "hot reload" in a Flutter IDE).
         // Notice that the counter didn't reset back to zero; the application
         // is not restarted.
+        fontFamily: 'Quicksand',
         primarySwatch: Colors.blue,
       ),
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
@@ -79,28 +83,107 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        centerTitle: true,
+        title: const Text("Shima", style: TextStyle(fontFamily: "LucidaFax")),
+        backgroundColor: Colors.transparent,
       ),
-      body: currentLocation == null ||
-              polylines ==
-                  null // Ternary to check whether currentLocation variable exists
-          ? const Center(
-              child: Text("Loading...")) // If null, display loading text
-          : GoogleMap(
-              // Otherwise, display the map
-              mapType: MapType
-                  .satellite, // map types: [roadmap, hybrid, terrain, satellite]
-              initialCameraPosition: CameraPosition(
-                target: currentLocation!,
-                zoom: 8.5, // Camera zoom
-              ),
-              // Our markers
-              polylines: polylines,
-              myLocationEnabled: true,
-            ),
+      body: SizedBox.expand(
+        child: Stack(children: <Widget>[
+          Align(
+            child: currentLocation == null ||
+                    polylines ==
+                        null // Ternary to check whether currentLocation variable exists
+                ? const Center(
+                    child: Text("Loading...")) // If null, display loading text
+                : GoogleMap(
+                    // Otherwise, display the map
+                    mapType: MapType
+                        .satellite, // map types: [roadmap, hybrid, terrain, satellite]
+                    initialCameraPosition: CameraPosition(
+                      target: currentLocation!,
+                      zoom: 18, // Camera zoom
+                    ),
+                    // Our markers
+                    polylines: polylines,
+                    myLocationEnabled: true,
+                  ),
+          ),
+          SizedBox.expand(
+              child: DraggableScrollableSheet(
+            initialChildSize: 0.17,
+            minChildSize: 0.17,
+            maxChildSize: 0.4,
+            builder: (BuildContext c, s) {
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 15,
+                  vertical: 0,
+                ),
+                decoration: BoxDecoration(
+                  color: ColorSelect().darkGrey,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: ListView(
+                  controller: s,
+                  children: <Widget>[
+                    Container(
+                        transform: Matrix4.translationValues(0.0, -50.0, 0.0),
+                        child: Stack(children: <Widget>[
+                          Center(
+                            child: Container(
+                              height: 40,
+                              width: 150,
+                              margin: const EdgeInsets.only(top: 20),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: ColorSelect().shimaBlue,
+                                ),
+                                onPressed: initState,
+                                child: const Center(
+                                  child: Text("Start"),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ]))
+                  ],
+                ),
+              );
+            },
+          ))
+        ]),
+      ),
+      drawer: Drawer(
+        child: ListView(
+          children: [
+            Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  icon: const Icon(Icons.close),
+                  color: Colors.black,
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                )),
+            ListTile(
+                title: const Text('History', style: TextStyle(fontSize: 20)),
+                onTap: () {
+                  Navigator.pop(context);
+                }),
+            ListTile(
+              title: const Text('Settings', style: TextStyle(fontSize: 20)),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            )
+          ],
+        ),
+      ),
     );
   }
 }
