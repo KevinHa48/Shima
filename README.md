@@ -6,6 +6,8 @@ This is a app designed for hikers to mark a breadcrumb trail. The user can mark 
 
 This application only works on IOS and android.
 
+You can find our project submission at https://devpost.com/software/shima!
+
 ## Required:
 - flutter
 - IOS/android virtual device or physical phone
